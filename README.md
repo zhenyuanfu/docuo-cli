@@ -18,3 +18,8 @@ Docuo uses port 3000 by default. You can use the `--port` flag to customize the 
 ```
 docuo dev --port 3333
 ```
+
+### Build
+
+#### `docuo build`
+Run this command to build project for production.

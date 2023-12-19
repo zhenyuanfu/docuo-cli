@@ -1,6 +1,6 @@
 {
-  "name": "fzydocuo",
-  "version": "1.0.5",
+  "name": "@spreading/docuo",
+  "version": "1.0.0",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
