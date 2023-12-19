@@ -3,7 +3,6 @@ import fs from 'fs';
 import detect from 'detect-port';
 import { createInterface } from 'readline';
 import download from 'download-git-repo';
-import { TEMPLATE_PATH } from './constants.js';
 import Ora from 'ora';
 
 export const buildLogger = (startText = '') => {
@@ -11,9 +10,9 @@ export const buildLogger = (startText = '') => {
     return logger;
 };
 
-export function downloadTemplate(url) {
+export function downloadTemplate(url, targetPath) {
   return new Promise((resolve) => {
-    download(url, TEMPLATE_PATH, {clone: true}, (err) => {
+    download(url, targetPath, {clone: true}, (err) => {
         if (err) {
           console.log('clone template err', err);
           process.exit(1);

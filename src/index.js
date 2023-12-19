@@ -10,6 +10,9 @@ import {
   TEMPLATE_PATH,
   DOCS_PATH,
   CMD_EXEC_PATH,
+  BUILD_TEMPLATE_PATH,
+  BUILD_DOCS_PATH,
+  BUILD_PACKAGE_JSON_PATH,
 } from "./constants.js";
 import childProcess from 'child_process';
 import Chalk from 'chalk';
@@ -25,10 +28,10 @@ import { Server as SocketServer } from 'socket.io';
 import open from 'open';
 import chokidar from 'chokidar';
 
-function runCommand(command) {
+function runCommand(command, cwd) {
   return new Promise((resolve) => {
     const res = childProcess.exec(command, {
-      cwd: TEMPLATE_PATH,
+      cwd
     }, (err, stdout, stderr) => {
       // console.log(`${command} stdout`, stdout);
       // console.log(`${command} stderr`, stderr);
@@ -40,6 +43,16 @@ function runCommand(command) {
     });
     // console.log(`${command} res`, res);
   })
+}
+
+const copyDocsOptions = {
+  filter: function(stat, filepath, filename){
+    // do not want copy .svn directories
+    if (stat === 'directory' && filename === 'docuo-template') {
+      return false;
+    }
+    return true;
+  }
 }
 
 yargs(hideBin(process.argv)).command(
@@ -58,14 +71,14 @@ yargs(hideBin(process.argv)).command(
       if (shouldDownload) {
         fse.emptyDirSync(TEMPLATE_PATH);
         logger.text = 'Cloning docuo template...';
-        await downloadTemplate(`direct:${TEMPLATE_GIT_ADDR}`);
-        logger.text = 'Docuo pnpm installing...';
-        await runCommand(`pnpm install`);
+        await downloadTemplate(`direct:${TEMPLATE_GIT_ADDR}`, TEMPLATE_PATH);
       }
+      logger.text = 'Docuo pnpm installing...';
+      await runCommand(`pnpm install`, TEMPLATE_PATH);
       logger.stop();
 
       fse.emptyDirSync(DOCS_PATH);
-      copyDir(CMD_EXEC_PATH, DOCS_PATH);
+      copyDir(CMD_EXEC_PATH, DOCS_PATH, copyDocsOptions);
       process.chdir(TEMPLATE_PATH);
 
       // console.log(`🌿 ${Chalk.green(`Your local preview is available at http://localhost:${port}`)}`);
@@ -103,26 +116,26 @@ yargs(hideBin(process.argv)).command(
   () => undefined,
   async () => {
     const logger = buildLogger('Preparing local docuo template...');
-    const packageJSON = fs.existsSync(PACKAGE_JSON_PATH)
+    const packageJSON = fs.existsSync(BUILD_PACKAGE_JSON_PATH)
       ? fse.readFileSync(PACKAGE_JSON_PATH, 'utf8')
       : '{}';
     const version = JSON.parse(packageJSON).version;
     const shouldDownload = version !== TARGET_DOCUO_VERSION;
     if (shouldDownload) {
-      fse.emptyDirSync(TEMPLATE_PATH);
+      fse.emptyDirSync(BUILD_TEMPLATE_PATH);
       logger.text = 'Cloning docuo template...';
-      await downloadTemplate(`direct:${TEMPLATE_GIT_ADDR}`);
-      logger.text = 'Docuo pnpm installing...';
-      await runCommand(`pnpm install`);
+      await downloadTemplate(`direct:${TEMPLATE_GIT_ADDR}`, BUILD_TEMPLATE_PATH);
     }
+    logger.text = 'Docuo pnpm installing...';
+    await runCommand(`pnpm install`, BUILD_TEMPLATE_PATH);
     logger.stop();
 
-    fse.emptyDirSync(DOCS_PATH);
-    copyDir(CMD_EXEC_PATH, DOCS_PATH);
-    process.chdir(TEMPLATE_PATH);
+    fse.emptyDirSync(BUILD_DOCS_PATH);
+    copyDir(CMD_EXEC_PATH, BUILD_DOCS_PATH, copyDocsOptions);
+    process.chdir(BUILD_TEMPLATE_PATH);
 
     const child = childProcess.exec(`pnpm build`, {
-      cwd: TEMPLATE_PATH,
+      cwd: BUILD_TEMPLATE_PATH,
     });
     child.stdout.on('data', function(data) {
       console.log('stdout: ' + data);
@@ -178,6 +191,6 @@ const onChangeEvent = async (filename, callback) => {
 };
 const onUpdateEvent = async (filename, callback) => {
   fse.emptyDirSync(DOCS_PATH);
-  copyDir(CMD_EXEC_PATH, DOCS_PATH);
+  copyDir(CMD_EXEC_PATH, DOCS_PATH, copyDocsOptions);
   callback();
 };

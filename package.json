@@ -1,6 +1,6 @@
 {
-  "name": "@spreading/docuo",
-  "version": "1.0.0",
+  "name": "fzydocuo",
+  "version": "1.0.5",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -8,6 +8,10 @@
   "author": "",
   "license": "ISC",
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "bin": {
     "docuo": "src/index.js"
   },
